@@ -1,0 +1,38 @@
+version: '3'
+services:
+  envoy:
+    platform: linux/amd64
+    image: envoyproxy/envoy-contrib-dev:aa9f970162a21c86d8bb97ff5cb50c1eb6853d9d
+    working_dir: /envoy
+    depends_on:
+      go_plugin_compile:
+        condition: service_completed_successfully
+    command:
+    - -c
+    - envoy.yaml
+    - --component-log-level
+    - http:info
+    - -l
+    - warning
+    ports:
+    - "18000:18000"
+    volumes:
+    - .:/envoy
+    - libgo:/libgo
+    environment:
+      - GODEBUG=cgocheck=0
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+
+  go_plugin_compile:
+    platform: linux/amd64
+    build:
+      context: .
+    command: >
+      sh -c "
+      mv ./aws-cloudwatch.so /libgo"
+    volumes:
+    - libgo:/libgo
+
+volumes:
+  libgo:
